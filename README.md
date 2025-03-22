@@ -1,1 +1,1 @@
-# Stepik_tgbot
+# Stepik_tgbot (этот репозиторий создан в рамках обучения на Stepik по созданию бота на AIOgram 
