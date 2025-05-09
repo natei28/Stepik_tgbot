@@ -1,5 +1,7 @@
 import asyncio
 import logging
+# проверка
+# проверка
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
