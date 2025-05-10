@@ -7,7 +7,7 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
 from aiogram.filters import Command, CommandStart, StateFilter
 
-from keyboards.keyboards import markup_gender
+from keyboards.keyboards import markup_gender, markup_edu
 from lexicon.lexicon_ru import LEXICON_RU
 from config_data.config import user_dict, FSMFillForm
 
@@ -84,6 +84,56 @@ async def warning_not_age(message: Message):
   await message.answer(text=LEXICON_RU['wrong'])
   await asyncio.sleep(1)
   await message.answer(text=LEXICON_RU['note_age'])
+
+#-------------------------------------------------------------------------#
+# Этот хзндлер будет срабатывать на нажатие
+# кнопки при выборе пола и переводить бот в 
+# состояние отпраки фото
+@router.callback_query(StateFilter(FSMFillForm.fill_gender), 
+                       F.data.in_(['male', 'female', 'undefined_gender']))
+async def process_gender_press(callback: CallbackQuery, state: FSMContext):
+  await state.update_data(gender=callback.data)
+  await callback.message.delete()
+  await asyncio.sleep(1)
+  await callback.message.answer(text=LEXICON_RU['thanks'])
+  await asyncio.sleep(1)
+  await callback.message.answer(text=LEXICON_RU['photo_get'])
+  await state.set_state(FSMFillForm.upload_photo)
+
+# Этот хэндлер будет срабатывать, если время выбора пола
+# будет отправлено чтото другое
+@router.message(StateFilter(FSMFillForm.fill_gender))
+async def warning_not_gender(message: Message):
+  await message.answer(text=LEXICON_RU['wrong'])
+  await asyncio.sleep(1)
+  await message.answer(text=LEXICON_RU['note_gender'])
+  await asyncio.sleep(1)
+  await message.answer(text=LEXICON_RU['gender_sent'],
+                       reply_markup=markup_gender)
+
+
+#-------------------------------------------------------------------------#
+# Этот хэндлер будет срабатывать на отправку пользователем
+# своей фотографии и переводить бота в состояние ожидания
+# выбора образования
+@router.message(StateFilter(FSMFillForm.upload_photo), 
+                F.foto[-1].as_('largest_photo'))
+async def process_photo_sent(message: Message,
+                             state: FSMContext,
+                             largest_photo: PhotoSize):
+  await state.update_date(
+    photo_unique_id=largest_photo.file_unique_id,
+    photo_id=largest_photo.file_id)
+  await message.answer(text=LEXICON_RU['thanks'])
+  await asyncio.sleep(1)
+  await message.answer(text=LEXICON_RU['edu_sent'],
+                       reply_markyp=markup_edu)
+  await state.set_state(FSMFillForm.fill_education)
+
+
+
+
+
 
 
 
