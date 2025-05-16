@@ -7,7 +7,7 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
 from aiogram.filters import Command, CommandStart, StateFilter
 
-from keyboards.keyboards import markup_gender, markup_edu
+from keyboards.keyboards import bottom_kb, markup_gender, markup_edu, markup_wish_news
 from lexicon.lexicon_ru import LEXICON_RU
 from config_data.config import user_dict, FSMFillForm
 
@@ -17,7 +17,21 @@ router = Router()
 # и предлагать перейти к заполнению анкеты, отправив команлу /fillform
 @router.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message):
-  await message.answer(text=LEXICON_RU['/start'])
+  await message.answer(text=LEXICON_RU['/start'],
+                       reply_markup=bottom_kb)
+
+
+# Этот хэндлер будет срабатывать на кнопку "Справка"
+# в любом состоянии бота, будет определять в каком
+# сейчас срстоянии бот и предлагать прлтзователю 
+# продожить заполнение анкеты, подсказывая на каком он шаге
+@router.message(F.text==LEXICON_RU['help_btn'])
+async def procesd_help_command(message: Message, state: FSMContext):
+	await message.answer(text=LEXICON_RU['/help'])
+	await message.answer(text=LEXICON_RU[await state.get_state()])
+
+
+
 
 # Этот хэндлер будет срабатывать на комманду /cancel
 # в состоянии по умолчанию и сообщать, что это команда
@@ -37,12 +51,14 @@ async def process_cancel_inState_command(message: Message, state: FSMContext):
 
 # Этот хэндлер будет срабатывать на команду /fillform
 # и переврдить бота в состояние одидания ввода Имени
-@router.message(Command(commands='fillform'), StateFilter(default_state))
+#@router.message(Command(commands='fillform'), StateFilter(default_state))
+@router.message((F.text==LEXICON_RU['fillstart_btn'] or Command(commands='fillform')) and StateFilter(default_state))
 async def process_fillform_command(message: Message, state: FSMContext):
   await message.answer(text=LEXICON_RU['/fillform'])
   await asyncio.sleep(1) 
   await message.answer(text=LEXICON_RU['name_sent'])
   await state.set_state(FSMFillForm.fill_name)
+  print(LEXICON_RU[await state.get_state()])
   
   
 # Этот хэндлер будет срабатывать если введено корректное Имя
@@ -96,6 +112,7 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
   await callback.message.delete()
   await asyncio.sleep(1)
   await callback.message.answer(text=LEXICON_RU['thanks'])
+  await callback.message.answer(text="проаерка")
   await asyncio.sleep(1)
   await callback.message.answer(text=LEXICON_RU['photo_get'])
   await state.set_state(FSMFillForm.upload_photo)
@@ -117,25 +134,94 @@ async def warning_not_gender(message: Message):
 # своей фотографии и переводить бота в состояние ожидания
 # выбора образования
 @router.message(StateFilter(FSMFillForm.upload_photo), 
-                F.foto[-1].as_('largest_photo'))
+                F.photo[-1].as_('largest_photo'))
 async def process_photo_sent(message: Message,
                              state: FSMContext,
                              largest_photo: PhotoSize):
-  await state.update_date(
+  await state.update_data(
     photo_unique_id=largest_photo.file_unique_id,
     photo_id=largest_photo.file_id)
   await message.answer(text=LEXICON_RU['thanks'])
   await asyncio.sleep(1)
   await message.answer(text=LEXICON_RU['edu_sent'],
-                       reply_markyp=markup_edu)
+                       reply_markup=markup_edu)
   await state.set_state(FSMFillForm.fill_education)
+  
+# Этот хэндлер будет срабатывать, если во время отправки
+# фотографии, пользователем будет отправлено чтото другое
+@router.message(StateFilter(FSMFillForm.upload_photo))
+async def warning_not_photo(message: Message):
+	await message.answer(text=LEXICON_RU['wrong'])
+	await asyncio.sleep(1)
+	await message.answer(text=LEXICON_RU['note_photo'])
+	
+	
+#-------------------------------------------------------------------------#
+# Этот хэндлер будет срабатывать, если выбрано образование
+# и переводить бота в состояние выбора согласия на новости
+@router.callback_query(StateFilter(FSMFillForm.fill_education),
+                       F.data.in_(['higher', 'secondary', 'no_edu']))
+async def process_edu_press(callback: CallbackQuery, state: FSMContext):
+	await state.update_data(education=callback.data)
+	await callback.message.delete()
+	await callback.message.answer(text=LEXICON_RU['thanks'])
+	await asyncio.sleep(1)
+	await callback.message.answer(text=LEXICON_RU['wish_news_sent'],
+	                              reply_markup=markup_wish_news)
+	await state.set_state(FSMFillForm.fill_wish_news)
+
+# Этот хэндлер бедет срабатывать, если вместо выбора образования
+# отправлено чтото другое
+@router.message(StateFilter(FSMFillForm))
+async def warning_not_edu(message: Message):
+	await message.answer(text=LEXICON_RU['wrong'])
+	await asyncio.sleep(1)
+	await message.answer(text=LEXICON_RU['note_edu'])
+
+
+#-------------------------------------------------------------------------#
+# Этот хэндлер будет срабатывать на нажатие кнопки
+# согласия или не согласия получать новости и переводить
+# бота в состояние "по умолчанию"
+@router.callback_query(StateFilter(FSMFillForm.fill_wish_news,
+                       F.data.in_(['yes_news', 'no_news'])))
+async def process_wish_news_press(callback: CallbackQuery, state:FSMContext):
+	await state.update_data(wish_news=callback.data == 'yes_news')
+	user_dict[callback.from_user.id] = await state.get_data()
+	await callback.message.answer(text=LEXICON_RU['thanks'])
+	await state.clear()
+	await asyncio.sleep(1)
+	await callback.message.answer(text=LEXICON_RU['out_fsm'])
+	await asyncio.sleep(1)
+	await callback.message.answer(text=LEXICON_RU['show_data'])
+
+# Этот хэндлер будет срабатывать, если во время согласия на получение
+# новостей будет введено/отправлено что-то некорректноеR
+@router.message(StateFilter(FSMFillForm.fill_wish_news))
+async def warning_not_wish_news(message:Message):
+	await message.answer(text=LEXICON_RU['note_wish_news'])
+
+
+#-------------------------------------------------------------------------#
+# Этот хэндлер будет срабатывать на команду /showdata
+# и отправлять в чат данные анкеты, либо сообщать 
+# об отсутствии данных
+@router.message(StateFilter(default_state), Command(commands='showdata'))
+async def process_showdata_command(message: Message):
+	if message.from_user.id in user_dict:
+		await message.answer_photo(
+			photo=user_dict[message.from_user.id]["photo_id"],
+			caption=f'Имя: {user_dict[message.from_user.id]["name"]}\n'
+			        f'Возраст: {user_dict[message.from_user.id]["age"]}\n'
+			        f'Пол: {user_dict[message.from_user.id]["gender"]}\n'
+			        f'Образование: {user_dict[message.from_user.id]["education"]}\n'
+			        f'Получать новости: {user_dict[message.from_user.id]["wish_news"]}')
+	else:
+		await message.answer(text=LEXICON_RU['note_anket_data'])
+		
+	
 
 
 
-
-
-
-
-
-
+#router.message.register(process_start_command, Command(commands="start"), StateFilter(default_state))
 #router.message.register(process_start_command, Command(commands="start"), StateFilter(default_state))

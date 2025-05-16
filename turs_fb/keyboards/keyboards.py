@@ -4,6 +4,24 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from lexicon.lexicon_ru import LEXICON_RU
 
 
+
+#----------------------------------------------------------#
+#-----------Создание repky-клавиатуры c командами----------#
+
+# Создаем сами кнопки
+fillstart_button = KeyboardButton(text=LEXICON_RU['fillstart_btn'])
+showdata_button =  KeyboardButton(text=LEXICON_RU['showdata_btn'])
+cancel_button =    KeyboardButton(text=LEXICON_RU['cancel_btn'])
+help_button =      KeyboardButton(text=LEXICON_RU['help_btn'])
+contacts_button =  KeyboardButton(text=LEXICON_RU['contacts_btn'])
+
+# Создаем клавиатуру
+bottom_kb = ReplyKeyboardMarkup(
+	keyboard=[
+		[fillstart_button, showdata_button],
+		[cancel_button, help_button, contacts_button]],
+	resize_keyboard=True)
+
 #----------------------------------------------------------#
 #--------------Создание клавиатуры выбора пола-------------#
 
@@ -45,3 +63,20 @@ keyboard_edu: list[list[InlineKeyboardButton]] = [
   [no_educ_button]]
   
 markup_edu = InlineKeyboardMarkup(inline_keyboard=keyboard_edu)
+
+
+#----------------------------------------------------------#
+#---------Создание клавиатуры согласия на новости----------#
+
+yes_news_button = InlineKeyboardButton(
+  text='Да, согласен!',
+  callback_data='yes_news')
+
+no_news_button = InlineKeyboardButton(
+  text='Нет, спасибо!',
+  callback_data='no_news')
+  
+keyboard_wish_news: list[list[InlineKeyboardButton]] = [
+  [yes_news_button, no_news_button]]
+  
+markup_wish_news = InlineKeyboardMarkup(inline_keyboard=keyboard_wish_news)

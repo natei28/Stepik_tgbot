@@ -1,0 +1,2 @@
+Очичтка кэша
+sudo sync && echo 3 > /proc/sys/v/drop_caches
