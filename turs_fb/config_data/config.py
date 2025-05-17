@@ -33,3 +33,8 @@ class FSMFillForm(StatesGroup):
   upload_photo = State()       # Состояние ожидания загрузки фото
   fill_education = State()     # Состояние ожидания выбора образования
   fill_wish_news = State()     # Состояние ожидания выбора прлучать ли новости
+
+# Создаем список из состояний FSMFillForm:
+#  - вытаскиваем в список все атрибуты класса FSMFillForm
+#  - добавлем к элементам списка FSMFillForm:
+FSMFillForm_list = ['FSMFillForm:' + x for x in dir(FSMFillForm)]

@@ -7,9 +7,9 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
 from aiogram.filters import Command, CommandStart, StateFilter
 
-from keyboards.keyboards import bottom_kb, markup_gender, markup_edu, markup_wish_news
+from keyboards.keyboards import bottom_kb, markup_cont_fillform, markup_gender, markup_edu, markup_wish_news
 from lexicon.lexicon_ru import LEXICON_RU
-from config_data.config import user_dict, FSMFillForm
+from config_data.config import user_dict, FSMFillForm, FSMFillForm_list
 
 router = Router()
 
@@ -27,9 +27,26 @@ async def process_start_command(message: Message):
 # продожить заполнение анкеты, подсказывая на каком он шаге
 @router.message(F.text==LEXICON_RU['help_btn'])
 async def procesd_help_command(message: Message, state: FSMContext):
-	await message.answer(text=LEXICON_RU['/help'])
-	await message.answer(text=LEXICON_RU[await state.get_state()])
+	if await state.get_state() in FSMFillForm_list:
+		await message.answer(text=LEXICON_RU['/help'],
+		                     reply_markup=markup_cont_fillform)
+	else:
+		await message.answer(text=LEXICON_RU['/help'])
+	#await message.answer(text=LEXICON_RU[await state.get_state()])
 
+
+# Этот хэндлер будет срабатывать на кнопку "Контакты"
+# в любом состоянии бота, будет определять в каком
+# сейчас состоянии бот и предлагать пользователю 
+# продожить заполнение анкеты, если кнопку нажали при заполнении анкеты
+@router.message(F.text==LEXICON_RU['contacts_btn'])
+async def process_contacts_command(message: Message, state: FSMContext):
+	if await state.get_state() in FSMFillForm_list:
+		await message.answer(text=LEXICON_RU['/contacts'],
+		                     reply_markup=markup_cont_fillform)
+	else:
+		await message.answer(text=LEXICON_RU['/contacts'])
+		
 
 
 
@@ -52,13 +69,14 @@ async def process_cancel_inState_command(message: Message, state: FSMContext):
 # Этот хэндлер будет срабатывать на команду /fillform
 # и переврдить бота в состояние одидания ввода Имени
 #@router.message(Command(commands='fillform'), StateFilter(default_state))
-@router.message((F.text==LEXICON_RU['fillstart_btn'] or Command(commands='fillform')) and StateFilter(default_state))
+@router.message(Command(commands='fillform'), StateFilter(default_state))
+@router.message(F.text==LEXICON_RU['fillstart_btn'],StateFilter(default_state))
 async def process_fillform_command(message: Message, state: FSMContext):
   await message.answer(text=LEXICON_RU['/fillform'])
   await asyncio.sleep(1) 
   await message.answer(text=LEXICON_RU['name_sent'])
   await state.set_state(FSMFillForm.fill_name)
-  print(LEXICON_RU[await state.get_state()])
+#  print(LEXICON_RU[await state.get_state()])
   
   
 # Этот хэндлер будет срабатывать если введено корректное Имя

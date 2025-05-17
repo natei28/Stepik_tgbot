@@ -22,6 +22,18 @@ bottom_kb = ReplyKeyboardMarkup(
 		[cancel_button, help_button, contacts_button]],
 	resize_keyboard=True)
 
+
+#----------------------------------------------------------#
+#----Создание-клавиатуры c кнопками продолжить/отмена------#
+continue_button = InlineKeyboardButton(
+	text='Прожолжить заполнение',
+	callback_data="continue_fillform")
+	
+markup_cont_fillform = InlineKeyboardMarkup(
+	inline_keyboard=[[continue_button]])
+
+
+
 #----------------------------------------------------------#
 #--------------Создание клавиатуры выбора пола-------------#
 
