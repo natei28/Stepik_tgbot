@@ -1,12 +1,12 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-from lexicon.lexicon_ru import LEXICON_RU
-
+from lexicon.lexicon_ru import LEXICON_RU, FRUIT_LIST
+#from main.py import FRUIT_LIST
 
 
 #----------------------------------------------------------#
-#-----------Создание repky-клавиатуры c командами----------#
+#-----------Создание reply-клавиатуры c командами----------#
 
 # Создаем сами кнопки
 fillstart_button = KeyboardButton(text=LEXICON_RU['fillstart_btn'])
@@ -54,6 +54,41 @@ keyboard_male: list[list[InlineKeyboardButton]] = [
   [undefined_button]]
   
 markup_gender = InlineKeyboardMarkup(inline_keyboard=keyboard_male)
+
+
+
+
+
+
+def check_fruit_modkb(check_data):
+  aple_button = InlineKeyboardButton(
+    text=FRUIT_LIST['check_aple'],
+    callback_data='check_aple')
+
+  orange_button = InlineKeyboardButton(
+    text=FRUIT_LIST['check_orange'],
+    callback_data='check_orange')
+  
+  banan_button = InlineKeyboardButton(
+    text=FRUIT_LIST['check_banan'],
+    callback_data='check_banan')
+
+  kiwi_button = InlineKeyboardButton(
+    text=FRUIT_LIST['check_kiwi'],
+    callback_data='check_kiwi')
+    
+#  fruit_next_button = InlineKeyboardButton(
+#    text='Продолжить',
+#    callback_data='fruit_next_button')
+  
+  keyboard_fruit: list[list[InlineKeyboardButton]] = [
+  [aple_button, orange_button],
+  [banan_button, kiwi_button]]
+#  [fruit_next_button]]
+  
+  markup_fruit = InlineKeyboardMarkup(inline_keyboard=keyboard_fruit)
+  return markup_fruit
+
 
 #----------------------------------------------------------#
 #----------Создание клавиатуры выбора образования----------#
