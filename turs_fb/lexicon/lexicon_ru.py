@@ -71,16 +71,13 @@ LEXICON_RU: dict[str, str] = {
  	
 }
 
-FRUIT_LIST_BASE: dict[str, str] = {
-  'check_aple': 'яблоко',
-  'check_orange': 'апельсин',
-  'check_banan': 'банан',
-  'check_kiwi': 'Киви'}
-
-
 FRUIT_LIST: dict[str, str] = {
   'check_aple': 'яблоко',
   'check_orange': 'апельсин',
   'check_banan': 'банан',
-  'check_kiwi': 'Киви'
-}
+  'check_mandarin': 'мандарин',
+  'check_mango': 'манго',
+  'check_chery': 'вишня',
+  'check_kiwi': 'Киви'}
+
+#FRUIT_LIST_MOD = FRUIT_LIST.copy()
